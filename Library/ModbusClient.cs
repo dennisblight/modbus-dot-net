@@ -88,6 +88,7 @@ namespace DennisBlight.Modbus
         public ModbusClient()
         {
             socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            KeepAlive = true;
         }
 
         public ModbusClient(string host, int port = 502)
@@ -119,7 +120,32 @@ namespace DennisBlight.Modbus
         public void SendMessage(ModbusMessage message)
         {
             byte[] buffer = message.GetBytes();
-            socket.Send(buffer);
+            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
+            socket.SendAsync(bufferSegment, SocketFlags.None).ContinueWith((i) => { });
+        }
+
+        public async Task SendMessageAsync(ModbusMessage message)
+        {
+            byte[] buffer = message.GetBytes();
+            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
+            await socket.SendAsync(bufferSegment, SocketFlags.None);
+        }
+
+        public Response ReceiveResponse()
+        {
+            byte[] buffer = new byte[300];
+            int length = socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
+            if (length != buffer.Length) Array.Resize(ref buffer, length);
+            return Response.ParseBuffer(buffer);
+        }
+
+        public async Task<Response> ReceiveResponseAsync()
+        {
+            byte[] buffer = new byte[300];
+            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
+            int length = await socket.ReceiveAsync(bufferSegment, SocketFlags.None);
+            if (length != buffer.Length) Array.Resize(ref buffer, length);
+            return Response.ParseBuffer(buffer);
         }
     }
 }
