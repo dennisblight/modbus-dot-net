@@ -11,94 +11,115 @@ namespace DennisBlight.Modbus
 {
     public class ModbusClient : IDisposable
     {
-        private TcpClient client;
-        
-        public int ReceiveBufferSize
+        private Socket socket;
+
+        public Socket Socket
         {
-            get { return client.ReceiveBufferSize; }
-            set { client.ReceiveBufferSize = value; }
+            get { return socket; }
         }
 
         public int SendBufferSize
         {
-            get { return client.SendBufferSize; }
-            set { client.SendBufferSize = value; }
+            get { return (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, value); }
         }
 
-        public int ReceiveTimeout
+        public int ReceiveBufferSize
         {
-            get { return client.ReceiveTimeout; }
-            set { client.ReceiveTimeout = value; }
+            get { return (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, value); }
         }
 
         public int SendTimeout
         {
-            get { return client.SendTimeout; }
-            set { client.SendTimeout = value; }
+            get { return (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, value); }
         }
 
-        public bool Connected
+        public int ReceiveTimeout
         {
-            get { return client.Connected; }
+            get { return (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, value); }
         }
 
-        public ModbusClient()
+        public bool KeepAlive
         {
-            //client = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            get { return (bool)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, value); }
         }
 
-        public ModbusClient(string hostname, int port = 502)
+        public bool NoDelay
         {
-            client = new TcpClient(hostname, port);
+            get { return (bool)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.NoDelay, value); }
         }
 
-        public void Connect(string hostname, int port = 502)
+        public bool ReuseAddress
         {
-            client.Connect(hostname, port);
+            get { return (bool)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress); }
+            set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, value); }
         }
 
-        public void Connect(IPAddress ipAddress, int port = 502)
+        public IPAddress RemoteIPAddress
         {
-            client.Connect(ipAddress, port);
+            get { return (socket.RemoteEndPoint as IPEndPoint).Address; }
         }
 
-        public async Task ConnectAsync(string hostname, int port = 502)
+        public int RemotePort
         {
-            await client.ConnectAsync(hostname, port);
-        }
-
-        public async Task ConnectAsync(IPAddress ipAddress, int port = 502)
-        {
-            await client.ConnectAsync(ipAddress, port);
+            get { return (socket.RemoteEndPoint as IPEndPoint).Port; }
         }
 
         public void Dispose()
         {
-            client.Dispose();
+            if (socket != null)
+            {
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Dispose();
+            }
+            socket = null;
         }
 
-        public void SendRequest(ModbusMessage message)
+        ~ModbusClient()
+        {
+            Dispose();
+        }
+
+        public ModbusClient()
+        {
+            socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        }
+
+        public ModbusClient(string host, int port = 502)
+            : this()
+        {
+            Connect(host, port);
+        }
+
+        public void Connect(string host, int port = 502)
+        {
+            socket.Connect(host, port);
+        }
+
+        public void Connect(IPAddress host, int port = 502)
+        {
+            socket.Connect(host, port);
+        }
+
+        public async Task ConnectAsync(string host, int port = 502)
+        {
+            await socket.ConnectAsync(host, port);
+        }
+
+        public async Task ConnectAsync(IPAddress host, int port = 502)
+        {
+            await socket.ConnectAsync(host, port);
+        }
+
+        public void SendMessage(ModbusMessage message)
         {
             byte[] buffer = message.GetBytes();
-            client.GetStream().Write(buffer, 0, buffer.Length);
-        }
-
-        public async Task SendRequestAsync(ModbusMessage message)
-        {
-            await Task.Run(() => SendRequest(message));
-        }
-
-        public Response ReadResponse()
-        {
-            byte[] buffer = new byte[client.Available];
-            int readedCount = client.GetStream().Read(buffer, 0, buffer.Length);
-            if (buffer.Length != readedCount) Array.Resize(ref buffer, readedCount);
-            return Response.ParseBuffer(buffer);
-        }
-
-        public async Task<Response> ReadResponseAsync()
-        {
-            return await Task.Run(() => ReadResponse());
+            socket.Send(buffer);
         }
     }
 }
