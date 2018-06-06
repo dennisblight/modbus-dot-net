@@ -13,6 +13,11 @@ namespace DennisBlight.Modbus
     {
         private Socket socket;
 
+        public Socket Socket
+        {
+            get { return socket; }
+        }
+
         public int SendBufferSize
         {
             get { return (int)socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer); }
@@ -94,6 +99,27 @@ namespace DennisBlight.Modbus
         public void Connect(string host, int port = 502)
         {
             socket.Connect(host, port);
+        }
+
+        public void Connect(IPAddress host, int port = 502)
+        {
+            socket.Connect(host, port);
+        }
+
+        public async Task ConnectAsync(string host, int port = 502)
+        {
+            await socket.ConnectAsync(host, port);
+        }
+
+        public async Task ConnectAsync(IPAddress host, int port = 502)
+        {
+            await socket.ConnectAsync(host, port);
+        }
+
+        public void SendMessage(ModbusMessage message)
+        {
+            byte[] buffer = message.GetBytes();
+            socket.Send(buffer);
         }
     }
 }
