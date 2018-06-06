@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModbusTcp", "ModbusTcp\ModbusTcp.csproj", "{35C9EF01-C30B-4999-AB4F-25C8CB41F8F5}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModbusConsole", "ModbusConsole\ModbusConsole.csproj", "{E7DC71C9-5F62-45D9-874F-16D5057EAFB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModbusTcp", "ModbusTcp\ModbusTcp.csproj", "{35C9EF01-C30B-4999-AB4F-25C8CB41F8F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{35C9EF01-C30B-4999-AB4F-25C8CB41F8F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35C9EF01-C30B-4999-AB4F-25C8CB41F8F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35C9EF01-C30B-4999-AB4F-25C8CB41F8F5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7DC71C9-5F62-45D9-874F-16D5057EAFB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7DC71C9-5F62-45D9-874F-16D5057EAFB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7DC71C9-5F62-45D9-874F-16D5057EAFB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7DC71C9-5F62-45D9-874F-16D5057EAFB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
