@@ -1,7 +1,6 @@
-﻿using DennisBlight.Modbus.Message;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DennisBlight.Modbus
 {
-    public class ModbusClient : IDisposable
+    public class ModbusListener
     {
         private Socket socket;
 
@@ -60,9 +59,17 @@ namespace DennisBlight.Modbus
             set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, value ? 1 : 0); }
         }
 
-        public bool Connected
+        public ModbusListener(IPAddress address, int port = 502)
         {
-            get { return socket.Connected; }
+            socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            socket.Bind(new IPEndPoint(address, port));
+        }
+
+        public ModbusListener(string address, int port = 502)
+        {
+            socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            IPAddress ipAddress = Dns.GetHostAddresses(address).First();
+            socket.Bind(new IPEndPoint(ipAddress, port));
         }
 
         public IPAddress RemoteIPAddress
@@ -85,83 +92,19 @@ namespace DennisBlight.Modbus
             get { return (socket.LocalEndPoint as IPEndPoint).Port; }
         }
 
-        public void Dispose()
+        public void Start()
         {
-            if (socket != null)
-            {
-                if(socket.Connected) socket.Shutdown(SocketShutdown.Both);
-                socket.Dispose();
-            }
-            socket = null;
+            socket.Listen(5);
         }
 
-        ~ModbusClient()
+        public void Stop()
         {
-            Dispose();
+            socket.Close();
         }
 
-        public ModbusClient()
+        public void AcceptClient()
         {
-            socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            KeepAlive = true;
-            ReceiveBufferSize = 1024;
-            SendBufferSize = 1024;
-        }
-
-        public ModbusClient(string host, int port = 502)
-            : this()
-        {
-            Connect(host, port);
-        }
-
-        public void Connect(string host, int port = 502)
-        {
-            socket.Connect(host, port);
-        }
-
-        public void Connect(IPAddress host, int port = 502)
-        {
-            socket.Connect(host, port);
-        }
-
-        public async Task ConnectAsync(string host, int port = 502)
-        {
-            await socket.ConnectAsync(host, port);
-        }
-
-        public async Task ConnectAsync(IPAddress host, int port = 502)
-        {
-            await socket.ConnectAsync(host, port);
-        }
-
-        public int SendMessage(ModbusMessage message)
-        {
-            byte[] buffer = message.GetBytes();
-            return socket.Send(buffer);
-        }
-
-        public async Task<int> SendMessageAsync(ModbusMessage message)
-        {
-            byte[] buffer = message.GetBytes();
-            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
-            return await socket.SendAsync(bufferSegment, SocketFlags.None);
-        }
-
-        public ModbusMessage ReceiveResponse()
-        {
-            byte[] buffer = new byte[300];
-            int length = socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
-            if (length != buffer.Length) Array.Resize(ref buffer, length);
-            return Response.ParseBuffer(buffer);
-        }
-
-        public async Task<ModbusMessage> ReceiveResponseAsync()
-        {
-            byte[] buffer = new byte[300];
-            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
-            int length = await socket.ReceiveAsync(bufferSegment, SocketFlags.None);
-            if (length != buffer.Length) Array.Resize(ref buffer, length);
-            return Response.ParseBuffer(buffer);
+            return socket.Accept();
         }
     }
 }
