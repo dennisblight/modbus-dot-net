@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DennisBlight.Modbus.Message
 {
@@ -18,9 +14,10 @@ namespace DennisBlight.Modbus.Message
         }
 
         /// <summary>Return the function code for this message. This value wouldn't expose exception flags.</summary>
-        public FunctionCode FunctionCode
+        public abstract FunctionCode FunctionCode
         {
-            get { return (FunctionCode)(pdu[FunctionCodeOffset] & 0x7f); }
+            get;
+            //get { return (FunctionCode)(pdu[FunctionCodeOffset] & 0x7f); }
         }
 
         /// <summary>Get the clone of underlying bytes of PDU segments.</summary>
@@ -29,16 +26,24 @@ namespace DennisBlight.Modbus.Message
             return (byte[])pdu.Clone();
         }
 
-        protected ModbusMessage(FunctionCode functionCode, int baseLength)
+        protected ModbusMessage(int baseLength)
         {
             pdu = new byte[baseLength];
-            pdu[FunctionCodeOffset] = (byte)functionCode;
+            pdu[FunctionCodeOffset] = (byte)FunctionCode;
         }
 
-        protected internal void ResizePdu(int newSize)
+        protected ModbusMessage(byte[] buffer)
+        {
+            CheckIntegrity(buffer);
+            pdu = buffer;
+        }
+
+        protected void ResizePdu(int newSize)
         {
             Array.Resize(ref pdu, newSize);
         }
+
+        protected abstract void CheckIntegrity(byte[] buffer);
 
         protected static void CheckConstraint(int value, int min, int max, string fieldName)
         {
@@ -57,16 +62,23 @@ namespace DennisBlight.Modbus.Message
             get { return BitHelper.ToUInt16(PDU, AddressOffset); }
         }
 
-        protected ModbusRequest(FunctionCode functionCode, int baseLength, ushort address)
-            : base(functionCode, baseLength)
+        protected ModbusRequest(int baseLength, ushort address)
+            : base(baseLength)
         {
             BitHelper.WriteBuffer(PDU, address, AddressOffset);
+        }
+
+        /// <summary>Only check wether the function code is valid.</summary>
+        protected override void CheckIntegrity(byte[] buffer)
+        {
+            if (buffer[0] != (byte)FunctionCode) throw new IntegrityViolationException();
         }
     }
 
     public abstract class ModbusResponse : ModbusMessage
     {
         protected const int ExceptionCodeOffset = 1;
+        protected const int ExceptionResponseBaseLength = 2;
 
         public bool HasException
         {
@@ -78,14 +90,22 @@ namespace DennisBlight.Modbus.Message
             get { return (ExceptionCode)(HasException ? PDU[ExceptionCodeOffset] : 0); }
         }
 
-        protected ModbusResponse(FunctionCode functionCode, int baseLength)
-            : base(functionCode, baseLength)
+        protected ModbusResponse(int baseLength)
+            : base(baseLength)
         { }
 
-        protected ModbusResponse(FunctionCode functionCode, ExceptionCode code)
-            : base(functionCode, 2)
+        protected ModbusResponse(ExceptionCode code)
+            : base(ExceptionResponseBaseLength)
         {
+            PDU[FunctionCodeOffset] |= 0x80;
             PDU[ExceptionCodeOffset] = (byte)code;
+        }
+
+        /// <summary>Only check wether the function code is valid.</summary>
+        protected override void CheckIntegrity(byte[] buffer)
+        {
+            if ((buffer[0] & 0x7f) != (byte)FunctionCode) throw new IntegrityViolationException();
+            if(HasException && buffer.Length != 2) throw new IntegrityViolationException();
         }
     }
     
@@ -94,6 +114,7 @@ namespace DennisBlight.Modbus.Message
         public abstract class ReadRequest : ModbusRequest
         {
             protected const int QuantityOffset = 3;
+            protected const int BaseLength = 5;
 
             /// <summary>Read quantity</summary>
             public ushort Quantity
@@ -101,11 +122,18 @@ namespace DennisBlight.Modbus.Message
                 get { return BitHelper.ToUInt16(PDU, QuantityOffset); }
             }
 
-            internal ReadRequest(FunctionCode functionCode, ushort address, ushort quantity)
-                : base(functionCode, 5, address)
+            internal ReadRequest(ushort address, ushort quantity)
+                : base(BaseLength, address)
             {
                 CheckQuantityConstraint(quantity);
                 BitHelper.WriteBuffer(PDU, quantity, QuantityOffset);
+            }
+
+            protected sealed override void CheckIntegrity(byte[] buffer)
+            {
+                base.CheckIntegrity(buffer);
+                if (buffer.Length != 5) throw new IntegrityViolationException();
+                CheckQuantityConstraint(BitHelper.ToUInt16(buffer, QuantityOffset));
             }
 
             protected abstract void CheckQuantityConstraint(ushort quantity);
@@ -114,6 +142,7 @@ namespace DennisBlight.Modbus.Message
         public abstract class WriteSingleRequest : ModbusRequest
         {
             protected const int ValueOffset = 3;
+            protected const int BaseLength = 5;
 
             /// <summary>Written value</summary>
             public ushort Value
@@ -121,10 +150,16 @@ namespace DennisBlight.Modbus.Message
                 get { return BitHelper.ToUInt16(PDU, ValueOffset); }
             }
 
-            internal WriteSingleRequest(FunctionCode functionCode, ushort address, ushort value)
-                : base(functionCode, 5, address)
+            internal WriteSingleRequest(ushort address, ushort value)
+                : base(BaseLength, address)
             {
                 BitHelper.WriteBuffer(PDU, value, ValueOffset);
+            }
+
+            protected sealed override void CheckIntegrity(byte[] buffer)
+            {
+                base.CheckIntegrity(buffer);
+                if (buffer.Length != 5) throw new IntegrityViolationException();
             }
         }
 
@@ -159,6 +194,7 @@ namespace DennisBlight.Modbus.Message
                 get { return rawValues; }
                 set
                 {
+                    CheckByteCountConstraint(value.Length);
                     rawValues = value;
                     PDU[ByteCountOffset] = (byte)value.Length;
                     changed = true;
@@ -180,14 +216,21 @@ namespace DennisBlight.Modbus.Message
                 return base.GetBytes();
             }
 
-            internal WriteMultiRequest(FunctionCode functionCode, ushort address)
-                : base(functionCode, BaseLength, address)
+            internal WriteMultiRequest(ushort address)
+                : base(BaseLength, address)
             {
                 changed = true;
             }
 
+            protected sealed override void CheckIntegrity(byte[] buffer)
+            {
+                base.CheckIntegrity(buffer);
+                CheckQuantityConstraint(Quantity);
+                if (ByteCount != (buffer.Length - BaseLength)) throw new IntegrityViolationException();
+            }
+
             protected abstract void CheckQuantityConstraint(ushort quantity);
-            protected abstract void CheckByteCountConstraint(byte byteCount);
+            protected abstract void CheckByteCountConstraint(int byteCount);
         }
 
         public abstract class ReadResponse : ModbusResponse
@@ -214,6 +257,7 @@ namespace DennisBlight.Modbus.Message
                 get { return rawValues; }
                 set
                 {
+                    CheckByteCountConstraint(value.Length);
                     rawValues = value;
                     PDU[ByteCountOffset] = (byte)value.Length;
                     changed = true;
@@ -235,23 +279,33 @@ namespace DennisBlight.Modbus.Message
                 return base.GetBytes();
             }
 
-            internal ReadResponse(FunctionCode functionCode)
-                : base(functionCode, BaseLength)
+            internal ReadResponse()
+                : base(BaseLength)
             {
                 changed = true;
             }
 
-            protected ReadResponse(FunctionCode functionCode, ExceptionCode code)
-                : base(functionCode, code)
+            protected ReadResponse(ExceptionCode code)
+                : base(code)
             { }
 
-            protected abstract void CheckByteCountConstraint(byte value);
+            protected override void CheckIntegrity(byte[] buffer)
+            {
+                base.CheckIntegrity(buffer);
+                if(!HasException)
+                {
+                    if (ByteCount != (buffer.Length - BaseLength)) throw new IntegrityViolationException();
+                }
+            }
+
+            protected abstract void CheckByteCountConstraint(int value);
         }
 
         public abstract class WriteSingleResponse : ModbusResponse
         {
             protected const int AddressOffset = 1;
             protected const int ValueOffset = 3;
+            protected const int BaseLength = 5;
 
             public ushort Address
             {
@@ -263,15 +317,24 @@ namespace DennisBlight.Modbus.Message
                 get { return BitHelper.ToUInt16(PDU, ValueOffset); }
             }
 
-            internal WriteSingleResponse(FunctionCode functionCode, ushort address, ushort value)
-                : base(functionCode, 5)
+            internal WriteSingleResponse(ushort address, ushort value)
+                : base(BaseLength)
             {
                 BitHelper.WriteBuffer(PDU, address, AddressOffset);
                 BitHelper.WriteBuffer(PDU, value, ValueOffset);
             }
 
-            protected WriteSingleResponse(FunctionCode functionCode, ExceptionCode code)
-                : base(functionCode, code)
+            protected sealed override void CheckIntegrity(byte[] buffer)
+            {
+                base.CheckIntegrity(buffer);
+                if(!HasException)
+                {
+                    if (buffer.Length != BaseLength) throw new IntegrityViolationException();
+                }
+            }
+
+            protected WriteSingleResponse(ExceptionCode code)
+                : base(code)
             { }
         }
 
@@ -279,6 +342,7 @@ namespace DennisBlight.Modbus.Message
         {
             protected const int AddressOffset = 1;
             protected const int QuantityOffset = 3;
+            protected const int BaseLength = 5;
 
             public ushort Address
             {
@@ -290,16 +354,27 @@ namespace DennisBlight.Modbus.Message
                 get { return BitHelper.ToUInt16(PDU, QuantityOffset); }
             }
 
-            internal WriteMultiResponse(FunctionCode functionCode, ushort address, ushort quantity)
-                : base(functionCode, 5)
+            internal WriteMultiResponse(ushort address, ushort quantity)
+                : base(BaseLength)
             {
                 CheckQuantityConstraint(quantity);
                 BitHelper.WriteBuffer(PDU, address, AddressOffset);
                 BitHelper.WriteBuffer(PDU, quantity, QuantityOffset);
             }
 
-            protected WriteMultiResponse(FunctionCode functionCode, ExceptionCode code) : base(functionCode, code)
+            protected WriteMultiResponse(ExceptionCode code)
+                : base(code)
             { }
+
+            protected sealed override void CheckIntegrity(byte[] buffer)
+            {
+                base.CheckIntegrity(buffer);
+                if(!HasException)
+                {
+                    if (buffer.Length != BaseLength) throw new IntegrityViolationException();
+                    CheckQuantityConstraint(Quantity);
+                }
+            }
 
             protected abstract void CheckQuantityConstraint(ushort quantity);
         }

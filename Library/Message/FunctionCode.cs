@@ -4,7 +4,6 @@ using System.Text;
 
 namespace DennisBlight.Modbus.Message
 {
-    [Flags]
     public enum FunctionCode : byte
     {
         /// <summary>
@@ -45,11 +44,6 @@ namespace DennisBlight.Modbus.Message
         /// <summary>
         /// This function code is used to write a block of contiguous registers in a remote device.
         /// </summary>
-        WriteMultipleRegisters = 16,
-
-        /// <summary>
-        /// This code is used to indicate the response from remote device has error.
-        /// </summary>
-        ExceptionFlag = 0x80
+        WriteMultipleRegisters = 16
     }
 }

@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="BitHelper.cs" />
     <Compile Include="ConstraintViolationException.cs" />
+    <Compile Include="IntegrityViolationException.cs" />
     <Compile Include="Message\ExceptionCode.cs" />
     <Compile Include="Message\FunctionCode.cs" />
     <Compile Include="Message\ModbusMessageBase.cs" />
