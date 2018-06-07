@@ -31,7 +31,7 @@ namespace ConsoleApp
                 {
                     while (running && client.Connected)
                     {
-                        int length = client.SendMessage(new WriteSingleRegisterRequest() { RegisterAddress = 9999, RegisterValue = 1000 });
+                        int length = client.SendMessage(new WriteSingleRegisterRequest(9999, 1000));
                         Console.WriteLine($"{length} bytes sent");
                         Thread.Sleep(200);
                     }

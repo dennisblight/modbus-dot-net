@@ -48,6 +48,8 @@
     <Compile Include="ConstraintViolationException.cs" />
     <Compile Include="Message\ExceptionCode.cs" />
     <Compile Include="Message\FunctionCode.cs" />
+    <Compile Include="Message\ModbusMessageBase.cs" />
+    <Compile Include="Message\ModbusMessageImpl.cs" />
     <Compile Include="ModbusClient.cs" />
     <Compile Include="ModbusListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

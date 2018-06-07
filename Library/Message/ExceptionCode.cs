@@ -57,6 +57,6 @@ namespace DennisBlight.Modbus.Message
         /// </summary>
         GatewayTargetDeviceFailedToRespond = 11,
 
-        NoException = 0
+        //NoException = 0
     }
 }
