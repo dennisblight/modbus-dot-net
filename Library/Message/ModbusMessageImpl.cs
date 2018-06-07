@@ -8,6 +8,8 @@ namespace DennisBlight.Modbus.Message
             : base(address, quantity)
         { }
 
+        internal ReadCoilsRequest(byte[] buffer) : base(buffer) { }
+
         protected override void CheckQuantityConstraint(ushort quantity)
         {
             CheckConstraint(quantity, 1, 2000, nameof(Quantity));
@@ -22,6 +24,8 @@ namespace DennisBlight.Modbus.Message
             : base(address, quantity)
         { }
 
+        internal ReadDiscreteInputsRequest(byte[] buffer) : base(buffer) { }
+
         public override FunctionCode FunctionCode => FunctionCode.ReadDiscreteInputs;
     }
 
@@ -30,6 +34,8 @@ namespace DennisBlight.Modbus.Message
         public ReadHoldingRegistersRequest(ushort address, ushort quantity)
             : base(address, quantity)
         { }
+
+        internal ReadHoldingRegistersRequest(byte[] buffer) : base(buffer) { }
 
         protected override void CheckQuantityConstraint(ushort quantity)
         {
@@ -44,6 +50,8 @@ namespace DennisBlight.Modbus.Message
         public ReadInputRegistersRequest(ushort address, ushort quantity)
             : base(address, quantity)
         { }
+
+        internal ReadInputRegistersRequest(byte[] buffer) : base(buffer) { }
 
         public override FunctionCode FunctionCode => FunctionCode.ReadInputRegisters;
     }
@@ -95,6 +103,8 @@ namespace DennisBlight.Modbus.Message
             RawValues = bytes;
         }
 
+        internal ReadCoilsResponse(byte[] buffer) : base(buffer) { }
+
         protected override void CheckByteCountConstraint(int value)
         {
             CheckConstraint(value, 1, 250, nameof(ByteCount));
@@ -112,6 +122,8 @@ namespace DennisBlight.Modbus.Message
         public ReadDiscreteInputsResponse(ExceptionCode code)
             : base(code)
         { }
+
+        internal ReadDiscreteInputsResponse(byte[] buffer) : base(buffer) { }
 
         public override FunctionCode FunctionCode => FunctionCode.ReadDiscreteInputs;
     }
@@ -147,6 +159,8 @@ namespace DennisBlight.Modbus.Message
             : base(code)
         { }
 
+        internal ReadHoldingRegistersResponse(byte[] buffer) : base(buffer) { }
+
         protected override void CheckByteCountConstraint(int value)
         {
             CheckConstraint(value, 1, 250, nameof(ByteCount));
@@ -165,6 +179,8 @@ namespace DennisBlight.Modbus.Message
             : base(code)
         { }
 
+        internal ReadInputRegistersResponse(byte[] buffer) : base(buffer) { }
+
         public override FunctionCode FunctionCode => FunctionCode.ReadInputRegisters;
     }
 
@@ -176,6 +192,8 @@ namespace DennisBlight.Modbus.Message
             : base(address, (ushort)(value ? 0xff00 : 0))
         { }
 
+        internal WriteSingleCoilRequest(byte[] buffer) : base(buffer) { }
+
         public override FunctionCode FunctionCode => FunctionCode.WriteSingleCoil;
     }
 
@@ -184,6 +202,8 @@ namespace DennisBlight.Modbus.Message
         public WriteSingleRegisterRequest(ushort address, ushort value)
             : base(address, value)
         { }
+
+        internal WriteSingleRegisterRequest(byte[] buffer) : base(buffer) { }
 
         public override FunctionCode FunctionCode => FunctionCode.WriteSingleRegister;
     }
@@ -200,6 +220,8 @@ namespace DennisBlight.Modbus.Message
             : base(code)
         { }
 
+        internal WriteSingleCoilResponse(byte[] buffer) : base(buffer) { }
+
         public override FunctionCode FunctionCode => FunctionCode.WriteSingleCoil;
     }
 
@@ -212,6 +234,8 @@ namespace DennisBlight.Modbus.Message
         public WriteSingleRegisterResponse(ExceptionCode code)
             : base(code)
         { }
+
+        internal WriteSingleRegisterResponse(byte[] buffer) : base(buffer) { }
 
         public override FunctionCode FunctionCode => FunctionCode.WriteSingleRegister;
     }
@@ -259,6 +283,8 @@ namespace DennisBlight.Modbus.Message
             RawValues = bytes;
         }
 
+        internal WriteMultipleCoilsRequest(byte[] buffer) : base(buffer) { }
+
         protected override void CheckByteCountConstraint(int byteCount)
         {
             CheckConstraint(byteCount, 1, 246, nameof(ByteCount));
@@ -299,6 +325,8 @@ namespace DennisBlight.Modbus.Message
             RawValues = bytes;
         }
 
+        internal WriteMultipleRegistersRequest(byte[] buffer) : base(buffer) { }
+
         protected override void CheckByteCountConstraint(int byteCount)
         {
             CheckConstraint(byteCount, 1, 246, nameof(ByteCount));
@@ -322,6 +350,8 @@ namespace DennisBlight.Modbus.Message
             : base(code)
         { }
 
+        internal WriteMultipleCoilsResponse(byte[] buffer) : base(buffer) { }
+
         protected override void CheckQuantityConstraint(ushort quantity)
         {
             CheckConstraint(quantity, 1, 1968, nameof(Quantity));
@@ -339,6 +369,8 @@ namespace DennisBlight.Modbus.Message
         public WriteMultipleRegistersResponse(ExceptionCode code)
             : base(code)
         { }
+
+        internal WriteMultipleRegistersResponse(byte[] buffer) : base(buffer) { }
 
         protected override void CheckQuantityConstraint(ushort quantity)
         {

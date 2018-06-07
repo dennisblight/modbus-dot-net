@@ -22,10 +22,17 @@ namespace DennisBlight.Modbus.Message
             pdu[FunctionCodeOffset] = (byte)FunctionCode;
         }
 
-        protected ModbusMessage(byte[] buffer)
+        internal ModbusMessage(byte[] buffer)
         {
-            CheckIntegrity(buffer);
-            pdu = buffer;
+            try
+            {
+                CheckIntegrity(buffer);
+                pdu = buffer;
+            }
+            catch(ConstraintViolationException)
+            {
+                throw new IntegrityViolationException();
+            }
         }
 
         protected void ResizePdu(int newSize) => Array.Resize(ref pdu, newSize);
@@ -52,10 +59,37 @@ namespace DennisBlight.Modbus.Message
             BitHelper.WriteBuffer(PDU, address, AddressOffset);
         }
 
+        internal ModbusRequest(byte[] buffer) : base(buffer) { }
+
         /// <summary>Only check wether the function code is valid.</summary>
         protected override void CheckIntegrity(byte[] buffer)
         {
             if (buffer[0] != (byte)FunctionCode) throw new IntegrityViolationException();
+        }
+
+        public static ModbusRequest ParseBuffer(byte[] buffer)
+        {
+            FunctionCode functionCode = (FunctionCode)buffer[0];
+            switch(functionCode)
+            {
+                case FunctionCode.ReadCoils:
+                    return new ReadCoilsRequest(buffer);
+                case FunctionCode.ReadDiscreteInputs:
+                    return new ReadDiscreteInputsRequest(buffer);
+                case FunctionCode.ReadHoldingRegisters:
+                    return new ReadHoldingRegistersRequest(buffer);
+                case FunctionCode.ReadInputRegisters:
+                    return new ReadInputRegistersRequest(buffer);
+                case FunctionCode.WriteSingleCoil:
+                    return new WriteSingleCoilRequest(buffer);
+                case FunctionCode.WriteSingleRegister:
+                    return new WriteSingleRegisterRequest(buffer);
+                case FunctionCode.WriteMultipleCoils:
+                    return new WriteMultipleCoilsRequest(buffer);
+                case FunctionCode.WriteMultipleRegisters:
+                    return new WriteMultipleRegistersRequest(buffer);
+            }
+            throw new NotImplementedException($"Request for function code 0x{buffer[0]:X2} is not implemented or not supported");
         }
     }
 
@@ -72,6 +106,8 @@ namespace DennisBlight.Modbus.Message
             : base(baseLength)
         { }
 
+        internal ModbusResponse(byte[] buffer) : base(buffer) { }
+
         protected ModbusResponse(ExceptionCode code)
             : base(ExceptionResponseBaseLength)
         {
@@ -84,6 +120,31 @@ namespace DennisBlight.Modbus.Message
         {
             if ((buffer[0] & 0x7f) != (byte)FunctionCode) throw new IntegrityViolationException();
             if(HasException && buffer.Length != 2) throw new IntegrityViolationException();
+        }
+
+        public static ModbusResponse ParseBuffer(byte[] buffer)
+        {
+            FunctionCode functionCode = (FunctionCode)(buffer[0] & 0x7f);
+            switch (functionCode)
+            {
+                case FunctionCode.ReadCoils:
+                    return new ReadCoilsResponse(buffer);
+                case FunctionCode.ReadDiscreteInputs:
+                    return new ReadDiscreteInputsResponse(buffer);
+                case FunctionCode.ReadHoldingRegisters:
+                    return new ReadHoldingRegistersResponse(buffer);
+                case FunctionCode.ReadInputRegisters:
+                    return new ReadInputRegistersResponse(buffer);
+                case FunctionCode.WriteSingleCoil:
+                    return new WriteSingleCoilResponse(buffer);
+                case FunctionCode.WriteSingleRegister:
+                    return new WriteSingleRegisterResponse(buffer);
+                case FunctionCode.WriteMultipleCoils:
+                    return new WriteMultipleCoilsResponse(buffer);
+                case FunctionCode.WriteMultipleRegisters:
+                    return new WriteMultipleRegistersResponse(buffer);
+            }
+            throw new NotImplementedException($"Response for function code 0x{buffer[0]:X2} is not implemented or not supported");
         }
     }
     
@@ -103,6 +164,8 @@ namespace DennisBlight.Modbus.Message
                 CheckQuantityConstraint(quantity);
                 BitHelper.WriteBuffer(PDU, quantity, QuantityOffset);
             }
+
+            internal ReadRequest(byte[] buffer) : base(buffer) { }
 
             protected sealed override void CheckIntegrity(byte[] buffer)
             {
@@ -127,6 +190,8 @@ namespace DennisBlight.Modbus.Message
             {
                 BitHelper.WriteBuffer(PDU, value, ValueOffset);
             }
+
+            internal WriteSingleRequest(byte[] buffer) : base(buffer) { }
 
             protected sealed override void CheckIntegrity(byte[] buffer)
             {
@@ -188,6 +253,8 @@ namespace DennisBlight.Modbus.Message
                 changed = true;
             }
 
+            internal WriteMultiRequest(byte[] buffer) : base(buffer) { }
+
             protected sealed override void CheckIntegrity(byte[] buffer)
             {
                 base.CheckIntegrity(buffer);
@@ -242,15 +309,17 @@ namespace DennisBlight.Modbus.Message
                 return base.GetBytes();
             }
 
+            protected ReadResponse(ExceptionCode code)
+                : base(code)
+            { }
+
             internal ReadResponse()
                 : base(BaseLength)
             {
                 changed = true;
             }
 
-            protected ReadResponse(ExceptionCode code)
-                : base(code)
-            { }
+            internal ReadResponse(byte[] buffer) : base(buffer) { }
 
             protected override void CheckIntegrity(byte[] buffer)
             {
@@ -280,6 +349,8 @@ namespace DennisBlight.Modbus.Message
                 BitHelper.WriteBuffer(PDU, address, AddressOffset);
                 BitHelper.WriteBuffer(PDU, value, ValueOffset);
             }
+
+            internal WriteSingleResponse(byte[] buffer) : base(buffer) { }
 
             protected sealed override void CheckIntegrity(byte[] buffer)
             {
@@ -316,6 +387,8 @@ namespace DennisBlight.Modbus.Message
             protected WriteMultiResponse(ExceptionCode code)
                 : base(code)
             { }
+
+            internal WriteMultiResponse(byte[] buffer) : base(buffer) { }
 
             protected sealed override void CheckIntegrity(byte[] buffer)
             {

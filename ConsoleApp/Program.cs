@@ -51,6 +51,7 @@ namespace ConsoleApp
                     client = new ModbusClient("localhost");
                 }
             });
+
             Console.ReadLine();
             running = false;
             TcpListener listener = new TcpListener(IPAddress.Loopback, 502);
