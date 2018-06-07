@@ -170,10 +170,7 @@ namespace DennisBlight.Modbus.Message
 
     public class WriteSingleCoilRequest : WriteSingleRequest
     {
-        public bool BitStatus
-        {
-            get { return Value > 0; }
-        }
+        public bool BitStatus => Value > 0;
 
         public WriteSingleCoilRequest(ushort address, bool value) 
             : base(address, (ushort)(value ? 0xff00 : 0))
@@ -193,10 +190,7 @@ namespace DennisBlight.Modbus.Message
 
     public class WriteSingleCoilResponse : WriteSingleResponse
     {
-        public bool BitStatus
-        {
-            get { return Value > 0; }
-        }
+        public bool BitStatus => Value > 0;
 
         public WriteSingleCoilResponse(ushort address, bool value)
             : base(address, (ushort)(value ? 0xffff : 0))

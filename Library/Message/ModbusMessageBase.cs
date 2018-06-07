@@ -8,23 +8,13 @@ namespace DennisBlight.Modbus.Message
 
         private byte[] pdu;
 
-        protected byte[] PDU
-        {
-            get { return pdu; }
-        }
+        protected byte[] PDU => pdu;
 
         /// <summary>Return the function code for this message. This value wouldn't expose exception flags.</summary>
-        public abstract FunctionCode FunctionCode
-        {
-            get;
-            //get { return (FunctionCode)(pdu[FunctionCodeOffset] & 0x7f); }
-        }
+        public abstract FunctionCode FunctionCode { get; }
 
         /// <summary>Get the clone of underlying bytes of PDU segments.</summary>
-        public virtual byte[] GetBytes()
-        {
-            return (byte[])pdu.Clone();
-        }
+        public virtual byte[] GetBytes() => (byte[])pdu.Clone();
 
         protected ModbusMessage(int baseLength)
         {
@@ -38,10 +28,7 @@ namespace DennisBlight.Modbus.Message
             pdu = buffer;
         }
 
-        protected void ResizePdu(int newSize)
-        {
-            Array.Resize(ref pdu, newSize);
-        }
+        protected void ResizePdu(int newSize) => Array.Resize(ref pdu, newSize);
 
         protected abstract void CheckIntegrity(byte[] buffer);
 
@@ -57,10 +44,7 @@ namespace DennisBlight.Modbus.Message
         protected const int AddressOffset = 1;
 
         /// <summary>Address or Starting Address of modbus message data parameter.</summary>
-        public ushort Address
-        {
-            get { return BitHelper.ToUInt16(PDU, AddressOffset); }
-        }
+        public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
 
         protected ModbusRequest(int baseLength, ushort address)
             : base(baseLength)
@@ -80,15 +64,9 @@ namespace DennisBlight.Modbus.Message
         protected const int ExceptionCodeOffset = 1;
         protected const int ExceptionResponseBaseLength = 2;
 
-        public bool HasException
-        {
-            get { return (PDU[0] & 0x80) == 0x80; }
-        }
+        public bool HasException => (PDU[0] & 0x80) == 0x80;
 
-        public ExceptionCode ExceptionCode
-        {
-            get { return (ExceptionCode)(HasException ? PDU[ExceptionCodeOffset] : 0); }
-        }
+        public ExceptionCode ExceptionCode => (ExceptionCode) (HasException ? PDU[ExceptionCodeOffset] : 0);
 
         protected ModbusResponse(int baseLength)
             : base(baseLength)
@@ -117,10 +95,7 @@ namespace DennisBlight.Modbus.Message
             protected const int BaseLength = 5;
 
             /// <summary>Read quantity</summary>
-            public ushort Quantity
-            {
-                get { return BitHelper.ToUInt16(PDU, QuantityOffset); }
-            }
+            public ushort Quantity => BitHelper.ToUInt16(PDU, QuantityOffset);
 
             internal ReadRequest(ushort address, ushort quantity)
                 : base(BaseLength, address)
@@ -145,10 +120,7 @@ namespace DennisBlight.Modbus.Message
             protected const int BaseLength = 5;
 
             /// <summary>Written value</summary>
-            public ushort Value
-            {
-                get { return BitHelper.ToUInt16(PDU, ValueOffset); }
-            }
+            public ushort Value => BitHelper.ToUInt16(PDU, ValueOffset);
 
             internal WriteSingleRequest(ushort address, ushort value)
                 : base(BaseLength, address)
@@ -173,16 +145,10 @@ namespace DennisBlight.Modbus.Message
             private bool changed;
 
             /// <summary>Written values quantity</summary>
-            public ushort Quantity
-            {
-                get { return BitHelper.ToUInt16(PDU, QuantityOffset); }
-            }
+            public ushort Quantity => BitHelper.ToUInt16(PDU, QuantityOffset);
 
             /// <summary>Byte length of written values.</summary>
-            public byte ByteCount
-            {
-                get { return PDU[ByteCountOffset]; }
-            }
+            public byte ByteCount => PDU[ByteCountOffset];
 
             /// <summary>
             /// Get or set bytes of value segments.
@@ -242,10 +208,7 @@ namespace DennisBlight.Modbus.Message
             private bool changed = true;
 
             /// <summary>Byte length of readed values.</summary>
-            public byte ByteCount
-            {
-                get { return PDU[ByteCountOffset]; }
-            }
+            public byte ByteCount => PDU[ByteCountOffset];
 
             /// <summary>
             /// Get or set bytes of value segments.
@@ -307,15 +270,9 @@ namespace DennisBlight.Modbus.Message
             protected const int ValueOffset = 3;
             protected const int BaseLength = 5;
 
-            public ushort Address
-            {
-                get { return BitHelper.ToUInt16(PDU, AddressOffset); }
-            }
+            public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
 
-            public ushort Value
-            {
-                get { return BitHelper.ToUInt16(PDU, ValueOffset); }
-            }
+            public ushort Value => BitHelper.ToUInt16(PDU, ValueOffset);
 
             internal WriteSingleResponse(ushort address, ushort value)
                 : base(BaseLength)
@@ -344,15 +301,9 @@ namespace DennisBlight.Modbus.Message
             protected const int QuantityOffset = 3;
             protected const int BaseLength = 5;
 
-            public ushort Address
-            {
-                get { return BitHelper.ToUInt16(PDU, AddressOffset); }
-            }
+            public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
 
-            public ushort Quantity
-            {
-                get { return BitHelper.ToUInt16(PDU, QuantityOffset); }
-            }
+            public ushort Quantity => BitHelper.ToUInt16(PDU, QuantityOffset);
 
             internal WriteMultiResponse(ushort address, ushort quantity)
                 : base(BaseLength)
