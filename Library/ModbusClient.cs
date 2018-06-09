@@ -152,7 +152,7 @@ namespace DennisBlight.Modbus
             byte[] buffer = new byte[300];
             int length = socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
             if (length != buffer.Length) Array.Resize(ref buffer, length);
-            return Response.ParseBuffer(buffer);
+            return ModbusResponse.ParseBuffer(buffer);
         }
 
         public async Task<ModbusMessage> ReceiveResponseAsync()
@@ -161,7 +161,7 @@ namespace DennisBlight.Modbus
             ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
             int length = await socket.ReceiveAsync(bufferSegment, SocketFlags.None);
             if (length != buffer.Length) Array.Resize(ref buffer, length);
-            return Response.ParseBuffer(buffer);
+            return ModbusResponse.ParseBuffer(buffer);
         }
     }
 }

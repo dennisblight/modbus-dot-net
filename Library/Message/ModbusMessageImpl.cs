@@ -78,7 +78,7 @@ namespace DennisBlight.Modbus.Message
             : base(code)
         { }
 
-        public ReadCoilsResponse(bool[] bits)
+        public ReadCoilsResponse(params bool[] bits)
             : base()
         {
             byte[] bytes = new byte[(bits.Length / 8) + (bits.Length % 8 > 0 ? 1 : 0)];
@@ -96,7 +96,7 @@ namespace DennisBlight.Modbus.Message
                 }
                 if (bits[i])
                 {
-                    b |= (byte)(1 >> j);
+                    b |= (byte)(1 << j);
                 }
             }
             bytes[k] = b;
@@ -142,7 +142,7 @@ namespace DennisBlight.Modbus.Message
             return registers;
         }
 
-        public ReadHoldingRegistersResponse(ushort[] registers)
+        public ReadHoldingRegistersResponse(params ushort[] registers)
             : base()
         {
             byte[] bytes = new byte[2 * registers.Length];
@@ -213,7 +213,7 @@ namespace DennisBlight.Modbus.Message
         public bool BitStatus => Value > 0;
 
         public WriteSingleCoilResponse(ushort address, bool value)
-            : base(address, (ushort)(value ? 0xffff : 0))
+            : base(address, (ushort)(value ? 0xff00 : 0))
         { }
 
         public WriteSingleCoilResponse(ExceptionCode code)
@@ -276,11 +276,12 @@ namespace DennisBlight.Modbus.Message
                 }
                 if (values[i])
                 {
-                    b |= (byte)(1 >> j);
+                    b |= (byte)(1 << j);
                 }
             }
             bytes[k] = b;
             RawValues = bytes;
+            BitHelper.WriteBuffer(PDU, (ushort)values.Length, QuantityOffset);
         }
 
         internal WriteMultipleCoilsRequest(byte[] buffer) : base(buffer) { }
@@ -323,6 +324,7 @@ namespace DennisBlight.Modbus.Message
             }
 
             RawValues = bytes;
+            BitHelper.WriteBuffer(PDU, (ushort)values.Length, QuantityOffset);
         }
 
         internal WriteMultipleRegistersRequest(byte[] buffer) : base(buffer) { }

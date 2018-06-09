@@ -104,7 +104,7 @@ namespace DennisBlight.Modbus
 
         public void AcceptClient()
         {
-            return socket.Accept();
+            socket.Accept();
         }
     }
 }
