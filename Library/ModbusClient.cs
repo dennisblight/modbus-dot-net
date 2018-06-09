@@ -9,14 +9,11 @@ using System.Threading.Tasks;
 
 namespace DennisBlight.Modbus
 {
-    public class ModbusClient : IDisposable
+    public class ModbusTcpClient : IDisposable
     {
         private Socket socket;
 
-        public Socket Socket
-        {
-            get { return socket; }
-        }
+        public Socket Socket => socket;
 
         public int SendBufferSize
         {
@@ -60,47 +57,32 @@ namespace DennisBlight.Modbus
             set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, value ? 1 : 0); }
         }
 
-        public bool Connected
-        {
-            get { return socket.Connected; }
-        }
+        public bool Connected => socket.Connected;
 
-        public IPAddress RemoteIPAddress
-        {
-            get { return (socket.RemoteEndPoint as IPEndPoint).Address; }
-        }
+        public IPAddress RemoteIPAddress => (socket.RemoteEndPoint as IPEndPoint).Address;
 
-        public int RemotePort
-        {
-            get { return (socket.RemoteEndPoint as IPEndPoint).Port; }
-        }
+        public int RemotePort => (socket.RemoteEndPoint as IPEndPoint).Port;
 
-        public IPAddress LocalIPAddress
-        {
-            get { return (socket.LocalEndPoint as IPEndPoint).Address; }
-        }
+        public IPAddress LocalIPAddress => (socket.LocalEndPoint as IPEndPoint).Address;
 
-        public int LocalPort
-        {
-            get { return (socket.LocalEndPoint as IPEndPoint).Port; }
-        }
+        public int LocalPort => (socket.LocalEndPoint as IPEndPoint).Port;
 
         public void Dispose()
         {
             if (socket != null)
             {
-                if(socket.Connected) socket.Shutdown(SocketShutdown.Both);
+                if (socket.Connected) socket.Shutdown(SocketShutdown.Both);
                 socket.Dispose();
             }
             socket = null;
         }
 
-        ~ModbusClient()
+        ~ModbusTcpClient()
         {
             Dispose();
         }
 
-        public ModbusClient()
+        public ModbusTcpClient()
         {
             socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             KeepAlive = true;
@@ -108,10 +90,15 @@ namespace DennisBlight.Modbus
             SendBufferSize = 1024;
         }
 
-        public ModbusClient(string host, int port = 502)
+        public ModbusTcpClient(string host, int port = 502)
             : this()
         {
             Connect(host, port);
+        }
+
+        internal ModbusTcpClient(Socket socket)
+        {
+            this.socket = socket;
         }
 
         public void Connect(string host, int port = 502)
@@ -134,34 +121,70 @@ namespace DennisBlight.Modbus
             await socket.ConnectAsync(host, port);
         }
 
+        public int SendMessage(ModbusTcpAdu message)
+        {
+            return socket.Send(message.GetBytes());
+        }
+
+        public int SendMessage(ushort transactionID, byte unitID, ModbusMessage message)
+        {
+            return SendMessage(new ModbusTcpAdu(transactionID, unitID, message));
+        }
+
+        public int SendMessage(ushort transactionID, ModbusMessage message)
+        {
+            return SendMessage(transactionID, 0xff, message);
+        }
+
         public int SendMessage(ModbusMessage message)
         {
-            byte[] buffer = message.GetBytes();
-            return socket.Send(buffer);
+            return SendMessage(0x0000, 0xff, message);
+        }
+
+        public async Task<int> SendMessageAsync(ModbusTcpAdu message)
+        {
+            return await socket.SendAsync(new ArraySegment<byte>(message.GetBytes()), SocketFlags.None);
+        }
+
+        public async Task<int> SendMessageAsync(ushort transactionID, byte unitID, ModbusMessage message)
+        {
+            return await SendMessageAsync(new ModbusTcpAdu(transactionID, unitID, message));
+        }
+
+        public async Task<int> SendMessageAsync(ushort transactionID, ModbusMessage message)
+        {
+            return await SendMessageAsync(transactionID, 0xff, message);
         }
 
         public async Task<int> SendMessageAsync(ModbusMessage message)
         {
-            byte[] buffer = message.GetBytes();
-            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
-            return await socket.SendAsync(bufferSegment, SocketFlags.None);
+            return await SendMessageAsync(0x0000, 0xff, message);
         }
 
-        public ModbusMessage ReceiveResponse()
+        public ModbusTcpAdu ReceiveResponse(bool isRequest)
         {
             byte[] buffer = new byte[300];
             int length = socket.Receive(buffer, 0, buffer.Length, SocketFlags.None);
             if (length != buffer.Length) Array.Resize(ref buffer, length);
-            return ModbusResponse.ParseBuffer(buffer);
+            return new ModbusTcpAdu(buffer, isRequest);
         }
 
-        public async Task<ModbusMessage> ReceiveResponseAsync()
+        public ModbusTcpAdu ReceiveResponse()
+        {
+            return ReceiveResponse(false);
+        }
+
+        public async Task<ModbusTcpAdu> ReceiveResponseAsync(bool isRequest)
         {
             byte[] buffer = new byte[300];
-            ArraySegment<byte> bufferSegment = new ArraySegment<byte>(buffer);
-            int length = await socket.ReceiveAsync(bufferSegment, SocketFlags.None);
+            int length = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.None);
             if (length != buffer.Length) Array.Resize(ref buffer, length);
-            return ModbusResponse.ParseBuffer(buffer);
+            return new ModbusTcpAdu(buffer, isRequest);
+        }
+
+        public async Task<ModbusTcpAdu> ReceiveResponseAsync()
+        {
+            return await ReceiveResponseAsync(false);
         }
     }
 }

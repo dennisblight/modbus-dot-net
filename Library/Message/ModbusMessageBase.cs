@@ -8,7 +8,9 @@ namespace DennisBlight.Modbus.Message
 
         private byte[] pdu;
 
-        protected byte[] PDU => pdu;
+        internal byte[] PDU => pdu;
+
+        public int Length => pdu.Length;
 
         /// <summary>Return the function code for this message. This value wouldn't expose exception flags.</summary>
         public abstract FunctionCode FunctionCode { get; }
@@ -48,16 +50,7 @@ namespace DennisBlight.Modbus.Message
 
     public abstract class ModbusRequest : ModbusMessage
     {
-        protected const int AddressOffset = 1;
-
-        /// <summary>Address or Starting Address of modbus message data parameter.</summary>
-        public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
-
-        protected ModbusRequest(int baseLength, ushort address)
-            : base(baseLength)
-        {
-            BitHelper.WriteBuffer(PDU, address, AddressOffset);
-        }
+        protected ModbusRequest(int baseLength) : base(baseLength) { }
 
         internal ModbusRequest(byte[] buffer) : base(buffer) { }
 
@@ -152,16 +145,20 @@ namespace DennisBlight.Modbus.Message
     {
         public abstract class ReadRequest : ModbusRequest
         {
+            protected const int StartingAddressOffset = 1;
             protected const int QuantityOffset = 3;
             protected const int BaseLength = 5;
+
+            public ushort StartingAddress => BitHelper.ToUInt16(PDU, StartingAddressOffset);
 
             /// <summary>Read quantity</summary>
             public ushort Quantity => BitHelper.ToUInt16(PDU, QuantityOffset);
 
             internal ReadRequest(ushort address, ushort quantity)
-                : base(BaseLength, address)
+                : base(BaseLength)
             {
                 CheckQuantityConstraint(quantity);
+                BitHelper.WriteBuffer(PDU, address, StartingAddressOffset);
                 BitHelper.WriteBuffer(PDU, quantity, QuantityOffset);
             }
 
@@ -179,15 +176,20 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class WriteSingleRequest : ModbusRequest
         {
+            protected const int AddressOffset = 1;
             protected const int ValueOffset = 3;
             protected const int BaseLength = 5;
+
+            /// <summary>Address or Starting Address of modbus message data parameter.</summary>
+            public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
 
             /// <summary>Written value</summary>
             public ushort Value => BitHelper.ToUInt16(PDU, ValueOffset);
 
             internal WriteSingleRequest(ushort address, ushort value)
-                : base(BaseLength, address)
+                : base(BaseLength)
             {
+                BitHelper.WriteBuffer(PDU, address, AddressOffset);
                 BitHelper.WriteBuffer(PDU, value, ValueOffset);
             }
 
@@ -202,12 +204,15 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class WriteMultiRequest : ModbusRequest
         {
+            protected const int StartingAddressOffset = 1;
             protected const int QuantityOffset = 3;
             protected const int ByteCountOffset = 5;
             protected const int BaseLength = 6;
 
             private byte[] rawValues;
             private bool changed;
+
+            public ushort StartingAddress => BitHelper.ToUInt16(PDU, StartingAddressOffset);
 
             /// <summary>Written values quantity</summary>
             public ushort Quantity => BitHelper.ToUInt16(PDU, QuantityOffset);
@@ -248,8 +253,9 @@ namespace DennisBlight.Modbus.Message
             }
 
             internal WriteMultiRequest(ushort address)
-                : base(BaseLength, address)
+                : base(BaseLength)
             {
+                BitHelper.WriteBuffer(PDU, address, StartingAddressOffset);
                 changed = true;
             }
 

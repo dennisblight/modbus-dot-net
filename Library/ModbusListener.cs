@@ -66,11 +66,8 @@ namespace DennisBlight.Modbus
         }
 
         public ModbusListener(string address, int port = 502)
-        {
-            socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            IPAddress ipAddress = Dns.GetHostAddresses(address).First();
-            socket.Bind(new IPEndPoint(ipAddress, port));
-        }
+            : this(Dns.GetHostAddresses(address).First(), port)
+        { }
 
         public IPAddress RemoteIPAddress
         {
@@ -102,9 +99,14 @@ namespace DennisBlight.Modbus
             socket.Close();
         }
 
-        public void AcceptClient()
+        public ModbusTcpClient AcceptClient()
         {
-            socket.Accept();
+            return new ModbusTcpClient(socket.Accept());
+        }
+
+        public async Task<ModbusTcpClient> AcceptClientAsync()
+        {
+            return new ModbusTcpClient(await socket.AcceptAsync());
         }
     }
 }

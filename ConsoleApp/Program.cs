@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DennisBlight.Modbus;
 using DennisBlight.Modbus.Message;
+using System.Reflection;
 using static System.Diagnostics.Contracts.Contract;
 
 namespace ConsoleApp
@@ -16,8 +17,9 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            TestMessage();return;
-            ModbusClient client = new ModbusClient();
+            ReflectMyClasses();return;
+            //TestMessage();return;
+            ModbusTcpClient client = new ModbusTcpClient();
             Console.WriteLine($"Keep Alive          : {client.KeepAlive}");
             Console.WriteLine($"Receive Buffer Size : {client.ReceiveBufferSize = 1024}");
             Console.WriteLine($"Send Buffer Size    : {client.SendBufferSize = 1024}");
@@ -34,6 +36,7 @@ namespace ConsoleApp
                     while (running && client.Connected)
                     {
                         int length = client.SendMessage(new WriteSingleRegisterRequest(9999, 1000));
+                        
                         Console.WriteLine($"{length} bytes sent");
                         Thread.Sleep(200);
                     }
@@ -50,13 +53,12 @@ namespace ConsoleApp
                 catch (Exception x)
                 {
                     Console.WriteLine($"Error: {x.Message}");
-                    client = new ModbusClient("localhost");
+                    client = new ModbusTcpClient("localhost");
                 }
             });
 
             Console.ReadLine();
             running = false;
-            TcpListener listener = new TcpListener(IPAddress.Loopback, 502);
             //new ArraySegment<byte>()
         }
 
@@ -131,6 +133,15 @@ namespace ConsoleApp
             sb.Append($"{(message is ModbusRequest ? "Req." : "Res.")}: ");
             foreach (var b in message.GetBytes()) sb.Append($"{b:x2} ");
             return sb.ToString().Trim();
+        }
+
+        static void ReflectMyClasses()
+        {
+            var types = Assembly.GetAssembly(typeof(ModbusMessage)).GetTypes().Where((t)=> t.IsSubclassOf(typeof(ModbusResponse)));
+            foreach(var t in types)
+            {
+                Console.WriteLine(t.Name);
+            }
         }
     }
 }
