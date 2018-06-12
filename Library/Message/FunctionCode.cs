@@ -46,4 +46,17 @@ namespace DennisBlight.Modbus.Message
         /// </summary>
         WriteMultipleRegisters = 16
     }
+
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    sealed public class FunctionCodeAttribute : Attribute
+    {
+        private readonly FunctionCode functionCode;
+
+        public FunctionCodeAttribute(FunctionCode functionCode)
+        {
+            this.functionCode = functionCode;
+        }
+
+        public FunctionCode FunctionCode => functionCode;
+    }
 }

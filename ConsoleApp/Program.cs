@@ -17,7 +17,11 @@ namespace ConsoleApp
     {
         static void Main(string[] args)
         {
-            ReflectMyClasses();return;
+            RawTcp();return;//
+            byte[] buffer = new byte[] { 0x01, 0x00, 0x13, 0x00, 0x13 };
+            ModbusMessage mm = ModbusRequest.ParseBuffer(buffer);
+            return;
+            //ReflectMyClasses();return;
             //TestMessage();return;
             ModbusTcpClient client = new ModbusTcpClient();
             Console.WriteLine($"Keep Alive          : {client.KeepAlive}");
@@ -120,6 +124,23 @@ namespace ConsoleApp
             Assert(MessagePDU(fc0fRes) == "Res.: 0f 00 13 00 0a", $"{nameof(fc0fRes)} Fail");
             Assert(MessagePDU(fc10Req) == "Req.: 10 00 01 00 02 04 00 0a 01 02", $"{nameof(fc10Req)} Fail");
             Assert(MessagePDU(fc10Res) == "Res.: 10 00 01 00 02", $"{nameof(fc10Res)} Fail");
+
+            Assert(fc01Req.FunctionCode == (FunctionCode)0x01);
+            Assert(fc01Res.FunctionCode == (FunctionCode)0x01);
+            Assert(fc02Req.FunctionCode == (FunctionCode)0x02);
+            Assert(fc02Res.FunctionCode == (FunctionCode)0x02);
+            Assert(fc03Req.FunctionCode == (FunctionCode)0x03);
+            Assert(fc03Res.FunctionCode == (FunctionCode)0x03);
+            Assert(fc04Req.FunctionCode == (FunctionCode)0x04);
+            Assert(fc04Res.FunctionCode == (FunctionCode)0x04);
+            Assert(fc05Req.FunctionCode == (FunctionCode)0x05);
+            Assert(fc05Res.FunctionCode == (FunctionCode)0x05);
+            Assert(fc06Req.FunctionCode == (FunctionCode)0x06);
+            Assert(fc06Res.FunctionCode == (FunctionCode)0x06);
+            Assert(fc0fReq.FunctionCode == (FunctionCode)0x0f);
+            Assert(fc0fRes.FunctionCode == (FunctionCode)0x0f);
+            Assert(fc10Req.FunctionCode == (FunctionCode)0x10);
+            Assert(fc10Res.FunctionCode == (FunctionCode)0x10);
         }
 
         static void PrintMessagePDU(ModbusMessage message)
@@ -137,10 +158,27 @@ namespace ConsoleApp
 
         static void ReflectMyClasses()
         {
-            var types = Assembly.GetAssembly(typeof(ModbusMessage)).GetTypes().Where((t)=> t.IsSubclassOf(typeof(ModbusResponse)));
+            var types = Assembly.GetAssembly(typeof(ModbusMessage)).GetTypes().Where((t)=> t.IsSubclassOf(typeof(ModbusMessage)) && t.GetCustomAttribute(typeof(FunctionCodeAttribute)) != null);
+            Console.WriteLine(types.Count());
             foreach(var t in types)
             {
                 Console.WriteLine(t.Name);
+            }
+        }
+
+        static void RawTcp()
+        {
+            var client = new TcpClient("192.168.44.3", 502);
+            var stream = client.GetStream();
+            while(true)
+            {
+                byte[] write = Encoding.ASCII.GetBytes("test\r\n");
+                stream.Write(write, 0, write.Length);
+                byte[] read = new byte[300];
+                int length = stream.Read(read, 0, read.Length);
+                var dist = BitConverter.ToUInt16(read, 0) * 0.034 / 2;
+                Console.WriteLine(dist);
+                Thread.Sleep(500);
             }
         }
     }

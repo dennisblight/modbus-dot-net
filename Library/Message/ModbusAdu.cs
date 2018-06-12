@@ -8,10 +8,10 @@ namespace DennisBlight.Modbus.Message
 {
     public class ModbusTcpAdu
     {
-        private const int TransactionIDOffset = 0;
-        private const int ProtocolIDOffset = 2;
-        private const int LengthOffset = 4;
-        private const int UnitIDOffset = 6;
+        private const byte TransactionIDOffset = 0;
+        private const byte ProtocolIDOffset = 2;
+        private const byte LengthOffset = 4;
+        private const byte UnitIDOffset = 6;
 
         private byte[] adu;
         private byte[] mbap;
@@ -21,7 +21,7 @@ namespace DennisBlight.Modbus.Message
         {
             get
             {
-                if(mbap == null)
+                if (mbap == null)
                 {
                     mbap = new byte[7];
                     Buffer.BlockCopy(adu, 0, mbap, 0, mbap.Length);
@@ -32,7 +32,11 @@ namespace DennisBlight.Modbus.Message
 
         public ModbusMessage Message => message;
 
-        public ushort TransactionID => BitHelper.ToUInt16(adu, TransactionIDOffset);
+        public ushort TransactionID
+        {
+            get { return BitHelper.ToUInt16(adu, TransactionIDOffset); }
+            set { BitHelper.WriteBuffer(adu, value, TransactionID); }
+        }
 
         public ushort ProtocolID => BitHelper.ToUInt16(adu, ProtocolIDOffset);
 

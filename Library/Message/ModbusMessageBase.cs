@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 
 namespace DennisBlight.Modbus.Message
 {
     public abstract class ModbusMessage
     {
-        protected const int FunctionCodeOffset = 0;
+        protected const byte FunctionCodeOffset = 0;
 
         private byte[] pdu;
 
@@ -12,8 +14,13 @@ namespace DennisBlight.Modbus.Message
 
         public int Length => pdu.Length;
 
-        /// <summary>Return the function code for this message. This value wouldn't expose exception flags.</summary>
-        public abstract FunctionCode FunctionCode { get; }
+        public FunctionCode FunctionCode
+        {
+            get
+            {
+                return GetType().GetCustomAttribute<FunctionCodeAttribute>().FunctionCode;
+            }
+        }
 
         /// <summary>Get the clone of underlying bytes of PDU segments.</summary>
         public virtual byte[] GetBytes() => (byte[])pdu.Clone();
@@ -28,7 +35,7 @@ namespace DennisBlight.Modbus.Message
         {
             try
             {
-                CheckIntegrity(buffer);
+                if(false) CheckIntegrity(buffer);
                 pdu = buffer;
             }
             catch(ConstraintViolationException)
@@ -63,24 +70,25 @@ namespace DennisBlight.Modbus.Message
         public static ModbusRequest ParseBuffer(byte[] buffer)
         {
             FunctionCode functionCode = (FunctionCode)buffer[0];
-            switch(functionCode)
+
+            foreach (var t in Assembly.GetAssembly(typeof(ModbusMessage)).GetTypes())
             {
-                case FunctionCode.ReadCoils:
-                    return new ReadCoilsRequest(buffer);
-                case FunctionCode.ReadDiscreteInputs:
-                    return new ReadDiscreteInputsRequest(buffer);
-                case FunctionCode.ReadHoldingRegisters:
-                    return new ReadHoldingRegistersRequest(buffer);
-                case FunctionCode.ReadInputRegisters:
-                    return new ReadInputRegistersRequest(buffer);
-                case FunctionCode.WriteSingleCoil:
-                    return new WriteSingleCoilRequest(buffer);
-                case FunctionCode.WriteSingleRegister:
-                    return new WriteSingleRegisterRequest(buffer);
-                case FunctionCode.WriteMultipleCoils:
-                    return new WriteMultipleCoilsRequest(buffer);
-                case FunctionCode.WriteMultipleRegisters:
-                    return new WriteMultipleRegistersRequest(buffer);
+                if (t.IsSubclassOf(typeof(ModbusRequest)))
+                {
+                    var fcAttribute = t.GetCustomAttribute<FunctionCodeAttribute>();
+                    if (fcAttribute != null && fcAttribute.FunctionCode == functionCode)
+                    {
+                        try
+                        {
+                            var ctor = t.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
+                            return ctor.Invoke(new object[] { buffer }) as ModbusRequest;
+                        }
+                        catch (NullReferenceException)
+                        {
+                            throw new NullReferenceException($"Inaccessible constructor {t.Name}(byte[])");
+                        }
+                    }
+                }
             }
             throw new NotImplementedException($"Request for function code 0x{buffer[0]:X2} is not implemented or not supported");
         }
@@ -88,8 +96,8 @@ namespace DennisBlight.Modbus.Message
 
     public abstract class ModbusResponse : ModbusMessage
     {
-        protected const int ExceptionCodeOffset = 1;
-        protected const int ExceptionResponseBaseLength = 2;
+        protected const byte ExceptionCodeOffset = 1;
+        protected const byte ExceptionResponseBaseLength = 2;
 
         public bool HasException => (PDU[0] & 0x80) == 0x80;
 
@@ -114,28 +122,29 @@ namespace DennisBlight.Modbus.Message
             if ((buffer[0] & 0x7f) != (byte)FunctionCode) throw new IntegrityViolationException();
             if(HasException && buffer.Length != 2) throw new IntegrityViolationException();
         }
-
+        
         public static ModbusResponse ParseBuffer(byte[] buffer)
         {
             FunctionCode functionCode = (FunctionCode)(buffer[0] & 0x7f);
-            switch (functionCode)
+
+            foreach (var t in Assembly.GetAssembly(typeof(ModbusMessage)).GetTypes())
             {
-                case FunctionCode.ReadCoils:
-                    return new ReadCoilsResponse(buffer);
-                case FunctionCode.ReadDiscreteInputs:
-                    return new ReadDiscreteInputsResponse(buffer);
-                case FunctionCode.ReadHoldingRegisters:
-                    return new ReadHoldingRegistersResponse(buffer);
-                case FunctionCode.ReadInputRegisters:
-                    return new ReadInputRegistersResponse(buffer);
-                case FunctionCode.WriteSingleCoil:
-                    return new WriteSingleCoilResponse(buffer);
-                case FunctionCode.WriteSingleRegister:
-                    return new WriteSingleRegisterResponse(buffer);
-                case FunctionCode.WriteMultipleCoils:
-                    return new WriteMultipleCoilsResponse(buffer);
-                case FunctionCode.WriteMultipleRegisters:
-                    return new WriteMultipleRegistersResponse(buffer);
+                if (t.IsSubclassOf(typeof(ModbusResponse)))
+                {
+                    var fcAttribute = t.GetCustomAttribute<FunctionCodeAttribute>();
+                    if (fcAttribute != null && fcAttribute.FunctionCode == functionCode)
+                    {
+                        try
+                        {
+                            var ctor = t.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
+                            return ctor.Invoke(new object[] { buffer }) as ModbusResponse;
+                        }
+                        catch (NullReferenceException)
+                        {
+                            throw new NullReferenceException($"Inaccessible constructor {t.Name}(byte[])");
+                        }
+                    }
+                }
             }
             throw new NotImplementedException($"Response for function code 0x{buffer[0]:X2} is not implemented or not supported");
         }
@@ -145,9 +154,9 @@ namespace DennisBlight.Modbus.Message
     {
         public abstract class ReadRequest : ModbusRequest
         {
-            protected const int StartingAddressOffset = 1;
-            protected const int QuantityOffset = 3;
-            protected const int BaseLength = 5;
+            protected const byte StartingAddressOffset = 1;
+            protected const byte QuantityOffset = 3;
+            protected const byte BaseLength = 5;
 
             public ushort StartingAddress => BitHelper.ToUInt16(PDU, StartingAddressOffset);
 
@@ -176,9 +185,9 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class WriteSingleRequest : ModbusRequest
         {
-            protected const int AddressOffset = 1;
-            protected const int ValueOffset = 3;
-            protected const int BaseLength = 5;
+            protected const byte AddressOffset = 1;
+            protected const byte ValueOffset = 3;
+            protected const byte BaseLength = 5;
 
             /// <summary>Address or Starting Address of modbus message data parameter.</summary>
             public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
@@ -204,10 +213,10 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class WriteMultiRequest : ModbusRequest
         {
-            protected const int StartingAddressOffset = 1;
-            protected const int QuantityOffset = 3;
-            protected const int ByteCountOffset = 5;
-            protected const int BaseLength = 6;
+            protected const byte StartingAddressOffset = 1;
+            protected const byte QuantityOffset = 3;
+            protected const byte ByteCountOffset = 5;
+            protected const byte BaseLength = 6;
 
             private byte[] rawValues;
             private bool changed;
@@ -259,7 +268,10 @@ namespace DennisBlight.Modbus.Message
                 changed = true;
             }
 
-            internal WriteMultiRequest(byte[] buffer) : base(buffer) { }
+            internal WriteMultiRequest(byte[] buffer) : base(buffer)
+            {
+                changed = false;
+            }
 
             protected sealed override void CheckIntegrity(byte[] buffer)
             {
@@ -274,8 +286,8 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class ReadResponse : ModbusResponse
         {
-            protected const int ByteCountOffset = 1;
-            protected const int BaseLength = 2;
+            protected const byte ByteCountOffset = 1;
+            protected const byte BaseLength = 2;
 
             private byte[] rawValues;
             private bool changed = true;
@@ -341,9 +353,9 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class WriteSingleResponse : ModbusResponse
         {
-            protected const int AddressOffset = 1;
-            protected const int ValueOffset = 3;
-            protected const int BaseLength = 5;
+            protected const byte AddressOffset = 1;
+            protected const byte ValueOffset = 3;
+            protected const byte BaseLength = 5;
 
             public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
 
@@ -374,9 +386,9 @@ namespace DennisBlight.Modbus.Message
 
         public abstract class WriteMultiResponse : ModbusResponse
         {
-            protected const int AddressOffset = 1;
-            protected const int QuantityOffset = 3;
-            protected const int BaseLength = 5;
+            protected const byte AddressOffset = 1;
+            protected const byte QuantityOffset = 3;
+            protected const byte BaseLength = 5;
 
             public ushort Address => BitHelper.ToUInt16(PDU, AddressOffset);
 

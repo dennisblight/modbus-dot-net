@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DennisBlight.Modbus
 {
-    public class ModbusListener
+    public class ModbusTcpListener
     {
         private Socket socket;
 
@@ -59,13 +59,13 @@ namespace DennisBlight.Modbus
             set { socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, value ? 1 : 0); }
         }
 
-        public ModbusListener(IPAddress address, int port = 502)
+        public ModbusTcpListener(IPAddress address, int port = 502)
         {
             socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             socket.Bind(new IPEndPoint(address, port));
         }
 
-        public ModbusListener(string address, int port = 502)
+        public ModbusTcpListener(string address, int port = 502)
             : this(Dns.GetHostAddresses(address).First(), port)
         { }
 
@@ -92,6 +92,11 @@ namespace DennisBlight.Modbus
         public void Start()
         {
             socket.Listen(5);
+        }
+
+        public void Start(int backlog)
+        {
+            socket.Listen(backlog);
         }
 
         public void Stop()

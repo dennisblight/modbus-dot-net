@@ -1,8 +1,7 @@
-﻿using DennisBlight.Modbus.Message.Base;
-
-namespace DennisBlight.Modbus.Message
+﻿namespace DennisBlight.Modbus.Message
 {
-    public class ReadCoilsRequest : ReadRequest
+    [FunctionCode(FunctionCode.ReadCoils)]
+    public class ReadCoilsRequest : Base.ReadRequest
     {
         public ReadCoilsRequest(ushort address, ushort quantity)
             : base(address, quantity)
@@ -14,11 +13,10 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(quantity, 1, 2000, nameof(Quantity));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.ReadCoils;
     }
 
-    public class ReadDiscreteInputsRequest : ReadCoilsRequest
+    [FunctionCode(FunctionCode.ReadDiscreteInputs)]
+    public class ReadDiscreteInputsRequest : Base.ReadRequest
     {
         public ReadDiscreteInputsRequest(ushort address, ushort quantity)
             : base(address, quantity)
@@ -26,10 +24,14 @@ namespace DennisBlight.Modbus.Message
 
         internal ReadDiscreteInputsRequest(byte[] buffer) : base(buffer) { }
 
-        public override FunctionCode FunctionCode => FunctionCode.ReadDiscreteInputs;
+        protected override void CheckQuantityConstraint(ushort quantity)
+        {
+            CheckConstraint(quantity, 1, 2000, nameof(Quantity));
+        }
     }
 
-    public class ReadHoldingRegistersRequest : ReadRequest
+    [FunctionCode(FunctionCode.ReadHoldingRegisters)]
+    public class ReadHoldingRegistersRequest : Base.ReadRequest
     {
         public ReadHoldingRegistersRequest(ushort address, ushort quantity)
             : base(address, quantity)
@@ -41,11 +43,10 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(quantity, 1, 125, nameof(Quantity));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.ReadHoldingRegisters;
     }
 
-    public class ReadInputRegistersRequest : ReadHoldingRegistersRequest
+    [FunctionCode(FunctionCode.ReadInputRegisters)]
+    public class ReadInputRegistersRequest : Base.ReadRequest
     {
         public ReadInputRegistersRequest(ushort address, ushort quantity)
             : base(address, quantity)
@@ -53,10 +54,14 @@ namespace DennisBlight.Modbus.Message
 
         internal ReadInputRegistersRequest(byte[] buffer) : base(buffer) { }
 
-        public override FunctionCode FunctionCode => FunctionCode.ReadInputRegisters;
+        protected override void CheckQuantityConstraint(ushort quantity)
+        {
+            CheckConstraint(quantity, 1, 125, nameof(Quantity));
+        }
     }
 
-    public class ReadCoilsResponse : ReadResponse
+    [FunctionCode(FunctionCode.ReadCoils)]
+    public class ReadCoilsResponse : Base.ReadResponse
     {
         public bool[] GetBitStatus()
         {
@@ -109,10 +114,9 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(value, 1, 250, nameof(ByteCount));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.ReadCoils;
     }
 
+    [FunctionCode(FunctionCode.ReadDiscreteInputs)]
     public class ReadDiscreteInputsResponse : ReadCoilsResponse
     {
         public ReadDiscreteInputsResponse(params bool[] bits)
@@ -124,11 +128,10 @@ namespace DennisBlight.Modbus.Message
         { }
 
         internal ReadDiscreteInputsResponse(byte[] buffer) : base(buffer) { }
-
-        public override FunctionCode FunctionCode => FunctionCode.ReadDiscreteInputs;
     }
 
-    public class ReadHoldingRegistersResponse : ReadResponse
+    [FunctionCode(FunctionCode.ReadHoldingRegisters)]
+    public class ReadHoldingRegistersResponse : Base.ReadResponse
     {
         public ushort[] GetRegisterValues()
         {
@@ -165,10 +168,9 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(value, 1, 250, nameof(ByteCount));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.ReadHoldingRegisters;
     }
 
+    [FunctionCode(FunctionCode.ReadInputRegisters)]
     public class ReadInputRegistersResponse : ReadHoldingRegistersResponse
     {
         public ReadInputRegistersResponse(params ushort[] registers)
@@ -180,11 +182,10 @@ namespace DennisBlight.Modbus.Message
         { }
 
         internal ReadInputRegistersResponse(byte[] buffer) : base(buffer) { }
-
-        public override FunctionCode FunctionCode => FunctionCode.ReadInputRegisters;
     }
 
-    public class WriteSingleCoilRequest : WriteSingleRequest
+    [FunctionCode(FunctionCode.WriteSingleCoil)]
+    public class WriteSingleCoilRequest : Base.WriteSingleRequest
     {
         public bool BitStatus => Value > 0;
 
@@ -193,22 +194,20 @@ namespace DennisBlight.Modbus.Message
         { }
 
         internal WriteSingleCoilRequest(byte[] buffer) : base(buffer) { }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteSingleCoil;
     }
 
-    public class WriteSingleRegisterRequest : WriteSingleRequest
+    [FunctionCode(FunctionCode.WriteSingleRegister)]
+    public class WriteSingleRegisterRequest : Base.WriteSingleRequest
     {
         public WriteSingleRegisterRequest(ushort address, ushort value)
             : base(address, value)
         { }
 
         internal WriteSingleRegisterRequest(byte[] buffer) : base(buffer) { }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteSingleRegister;
     }
 
-    public class WriteSingleCoilResponse : WriteSingleResponse
+    [FunctionCode(FunctionCode.WriteSingleCoil)]
+    public class WriteSingleCoilResponse : Base.WriteSingleResponse
     {
         public bool BitStatus => Value > 0;
 
@@ -221,11 +220,10 @@ namespace DennisBlight.Modbus.Message
         { }
 
         internal WriteSingleCoilResponse(byte[] buffer) : base(buffer) { }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteSingleCoil;
     }
 
-    public class WriteSingleRegisterResponse : WriteSingleResponse
+    [FunctionCode(FunctionCode.WriteSingleRegister)]
+    public class WriteSingleRegisterResponse : Base.WriteSingleResponse
     {
         public WriteSingleRegisterResponse(ushort address, ushort value)
             : base(address, value)
@@ -236,11 +234,10 @@ namespace DennisBlight.Modbus.Message
         { }
 
         internal WriteSingleRegisterResponse(byte[] buffer) : base(buffer) { }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteSingleRegister;
     }
 
-    public class WriteMultipleCoilsRequest : WriteMultiRequest
+    [FunctionCode(FunctionCode.WriteMultipleCoils)]
+    public class WriteMultipleCoilsRequest : Base.WriteMultiRequest
     {
         public bool[] GetBitStatus()
         {
@@ -295,11 +292,10 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(quantity, 1, 1968, nameof(Quantity));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteMultipleCoils;
     }
 
-    public class WriteMultipleRegistersRequest : WriteMultiRequest
+    [FunctionCode(FunctionCode.WriteMultipleRegisters)]
+    public class WriteMultipleRegistersRequest : Base.WriteMultiRequest
     {
         public ushort[] GetRegisterValues()
         {
@@ -338,11 +334,10 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(quantity, 1, 123, nameof(Quantity));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteMultipleRegisters;
     }
 
-    public class WriteMultipleCoilsResponse : WriteMultiResponse
+    [FunctionCode(FunctionCode.WriteMultipleCoils)]
+    public class WriteMultipleCoilsResponse : Base.WriteMultiResponse
     {
         public WriteMultipleCoilsResponse(ushort address, ushort quantity)
             : base(address, quantity)
@@ -358,11 +353,10 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(quantity, 1, 1968, nameof(Quantity));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteMultipleCoils;
     }
 
-    public class WriteMultipleRegistersResponse : WriteMultiResponse
+    [FunctionCode(FunctionCode.WriteMultipleRegisters)]
+    public class WriteMultipleRegistersResponse : Base.WriteMultiResponse
     {
         public WriteMultipleRegistersResponse(ushort address, ushort quantity)
             : base(address, quantity)
@@ -378,7 +372,5 @@ namespace DennisBlight.Modbus.Message
         {
             CheckConstraint(quantity, 1, 123, nameof(Quantity));
         }
-
-        public override FunctionCode FunctionCode => FunctionCode.WriteMultipleRegisters;
     }
 }

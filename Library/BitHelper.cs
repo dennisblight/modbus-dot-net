@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DennisBlight.Modbus
 {
-    internal static class BitHelper
+    public static class BitHelper
     {
         public static byte[] GetBytes(bool value)
         {
@@ -125,7 +125,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Boolean)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToBoolean(bytes, 0);
             }
             return BitConverter.ToBoolean(value, index);
         }
@@ -136,7 +136,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Char)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToChar(bytes, 0);
             }
             return BitConverter.ToChar(value, index);
         }
@@ -147,7 +147,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Int16)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToInt16(bytes, 0);
             }
             return BitConverter.ToInt16(value, index);
         }
@@ -158,7 +158,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Int32)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToInt32(bytes, 0);
             }
             return BitConverter.ToInt32(value, index);
         }
@@ -169,7 +169,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Int64)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToInt64(bytes, 0);
             }
             return BitConverter.ToInt64(value, index);
         }
@@ -180,7 +180,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Single)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToSingle(bytes, 0);
             }
             return BitConverter.ToSingle(value, index);
         }
@@ -191,7 +191,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(Double)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToDouble(bytes, 0);
             }
             return BitConverter.ToDouble(value, index);
         }
@@ -202,7 +202,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(UInt16)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToUInt16(bytes, 0);
             }
             return BitConverter.ToUInt16(value, index);
         }
@@ -213,7 +213,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(UInt32)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToUInt32(bytes, 0);
             }
             return BitConverter.ToUInt32(value, index);
         }
@@ -224,7 +224,7 @@ namespace DennisBlight.Modbus
                 byte[] bytes = new byte[sizeof(UInt64)];
                 Buffer.BlockCopy(value, index, bytes, 0, bytes.Length);
                 Array.Reverse(bytes);
-                value = bytes;
+                return BitConverter.ToUInt64(bytes, 0);
             }
             return BitConverter.ToUInt64(value, index);
         }
